@@ -1,0 +1,10 @@
+name: TopkaMinecraftRewards
+version: '${project.version}'
+main: pl.koral.topkaminecraftrewards.TopkaMinecraftRewards
+api-version: 1.16
+authors: [ koral ]
+description: Rewards for voting on topkaminecraft.pl
+website: Topkaminecraft.pl
+commands:
+  rewards:
+    aliases: [nagrody, glosowanie, topka]

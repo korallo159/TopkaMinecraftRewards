@@ -1,0 +1,37 @@
+
+database:
+  jdbcurl:
+  username:
+  password:
+
+vote:
+  url: "https://topkaminecraft.pl/server/50"
+  id: 50
+
+rewards:
+  DAILY:
+    commands:
+      - "say daily reward"
+    lore:
+      - "&aNagrody do odebrania:"
+      - "&c&lPozdrowienia"
+      - "&9&l1x stone"
+    item: IRON_INGOT
+
+  WEEKLY:
+    commands:
+      - "say weekly reward"
+    lore:
+      - "&aNagrody do odebrania:"
+      - "&c&lPozdrowienia"
+      - "&9&l1x stone"
+    item: GOLD_INGOT
+  MONTHLY:
+    commands:
+      - "say monthly reward"
+    lore:
+      - "&aNagrody do odebrania:"
+      - "&c&lPozdrowienia"
+      - "&9&l1x stone"
+    item: DIAMOND
+
