@@ -23,7 +23,7 @@ public class Votes {
 
     public Votes fetchData(long id, int days){
         try {
-            URL url = new URL("https://mclistapi.azurewebsites.net/api/serverlist/servers/likehistory/" + id + "?days=" + days);
+            URL url = new URL("https://api.jbwm.pl/api/serverlist/servers/likehistory/" + id + "?days=" + days);
             InputStreamReader reader = new InputStreamReader(url.openStream());
 
             return new Gson().fromJson(reader, Votes.class);
@@ -33,7 +33,4 @@ public class Votes {
         return null;
 
     }
-
-
-
 }

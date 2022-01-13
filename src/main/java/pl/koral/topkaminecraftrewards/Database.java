@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import pl.koral.topkaminecraftrewards.model.Reward;
 import pl.koral.topkaminecraftrewards.model.SimpleStatament;
 
 import java.sql.Connection;
@@ -72,11 +73,11 @@ public class Database {
         }
     }
 
-    public void setVote(Player player, Reward reward) {
+    public void setVote(Player player, pl.koral.topkaminecraftrewards.model.Reward reward) {
         setStatement("UPDATE Players SET " + reward.toSQLString() + " =?, DAYS_IN_A_ROW=? WHERE UUID=?", statement -> {
             statement.setLong(1, System.currentTimeMillis());
 
-            if(reward == Reward.DAILY) { // Zwieksz/zresetuj glosowanie z rzedu tylko gdy jest odbierane daily, jezeli nie, to przepisz wartosc.
+            if(reward == pl.koral.topkaminecraftrewards.model.Reward.DAILY) { // Zwieksz/zresetuj glosowanie z rzedu tylko gdy jest odbierane daily, jezeli nie, to przepisz wartosc.
                 if (isInARow(player))
                     statement.setInt(2, getPlayerVotesInARow(player) + 1);
                 else statement.setInt(2, 1);
@@ -95,8 +96,7 @@ public class Database {
 
     }
 
-
-    public boolean didVote(Player player, Reward reward) {
+    public boolean didVote(Player player, pl.koral.topkaminecraftrewards.model.Reward reward) {
         Map<String, Object> m = getResultSet("SELECT DAYS_IN_A_ROW, " + reward.toSQLString() + " FROM Players WHERE UUID=?", statement -> {
             statement.setString(1, player.getUniqueId().toString());
             statement.executeQuery();

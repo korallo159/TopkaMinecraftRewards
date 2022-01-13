@@ -20,7 +20,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import pl.koral.topkaminecraftrewards.Database;
-import pl.koral.topkaminecraftrewards.Reward;
+import pl.koral.topkaminecraftrewards.model.Reward;
 import pl.koral.topkaminecraftrewards.TopkaMinecraftRewards;
 import pl.koral.topkaminecraftrewards.model.Votes;
 import pl.koral.topkaminecraftrewards.util.Cooldown;

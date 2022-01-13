@@ -1,4 +1,4 @@
-package pl.koral.topkaminecraftrewards;
+package pl.koral.topkaminecraftrewards.model;
 
 public enum Reward {
         DAILY, WEEKLY, MONTHLY;
