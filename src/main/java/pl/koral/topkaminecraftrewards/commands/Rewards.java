@@ -57,6 +57,7 @@ public class Rewards implements TabExecutor {
             p.sendMessage(prefix + " Musisz jeszcze poczekać chwilę zanim to zrobisz");
             return true;
         }
+
         cooldown.setCooldown(p, 500);
         CompletableFuture<Inventory> prepareInventory = CompletableFuture.supplyAsync(() -> {
             Votes votes = new Votes().fetchData(config.getLong("vote.id"), 1);

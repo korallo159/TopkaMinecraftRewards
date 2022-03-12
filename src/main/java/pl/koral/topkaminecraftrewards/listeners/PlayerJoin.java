@@ -1,5 +1,6 @@
 package pl.koral.topkaminecraftrewards.listeners;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -12,6 +13,6 @@ public class PlayerJoin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent ev){
-        db.initPlayer(ev.getPlayer());
+        Bukkit.getScheduler().runTaskAsynchronously(TopkaMinecraftRewards.getInstance(), () -> db.initPlayer(ev.getPlayer()));
     }
 }
