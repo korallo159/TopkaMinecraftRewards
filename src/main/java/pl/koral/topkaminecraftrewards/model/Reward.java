@@ -3,7 +3,6 @@ package pl.koral.topkaminecraftrewards.model;
 public enum Reward {
         DAILY, WEEKLY, MONTHLY;
 
-
         public String toSQLString(){
             switch (this){
                 case DAILY:

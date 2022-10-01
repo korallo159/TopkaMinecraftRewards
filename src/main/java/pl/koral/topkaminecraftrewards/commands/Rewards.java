@@ -48,6 +48,14 @@ public class Rewards implements TabExecutor {
     final static int SLOT_MONTHLY = 15;
     final static String prefix = ChatColor.GOLD + "[TopkaMinecraft.pl]";
 
+    private volatile Votes cache = new Votes();
+
+    public Rewards() {
+        Bukkit.getScheduler().runTaskTimerAsynchronously(TopkaMinecraftRewards.getInstance(), () -> {
+            cache = new Votes().fetchData(config.getLong("vote.id"), 1);
+
+        }, 0, 100);
+    }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
@@ -60,7 +68,8 @@ public class Rewards implements TabExecutor {
 
         cooldown.setCooldown(p, 500);
         CompletableFuture<Inventory> prepareInventory = CompletableFuture.supplyAsync(() -> {
-            Votes votes = new Votes().fetchData(config.getLong("vote.id"), 1);
+            Votes votes = cache;
+
             long count = votes.getLikesHistory().keySet().stream().filter(name -> name.equals(p.getName())).count();
 
             Instant now = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.systemDefault()).toInstant();
@@ -184,12 +193,17 @@ public class Rewards implements TabExecutor {
                     .build();
         });
 
-        try {
-            Inventory inv = prepareInventory.get(2500, TimeUnit.MILLISECONDS);
-            p.openInventory(inv);
-        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        prepareInventory.whenComplete((inv, error) -> {
+            if(error != null)
+                error.printStackTrace();
+
+            Bukkit.getScheduler().runTask(TopkaMinecraftRewards.getInstance(), () -> p.openInventory(inv));
+
+        }).whenComplete((i, error) -> {
+            if(error != null)
+                error.printStackTrace();
+        });
+
 
         return true;
     }
