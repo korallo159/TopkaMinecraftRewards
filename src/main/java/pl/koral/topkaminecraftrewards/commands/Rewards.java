@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import pl.koral.topkaminecraftrewards.Database;
 import pl.koral.topkaminecraftrewards.model.Reward;
 import pl.koral.topkaminecraftrewards.TopkaMinecraftRewards;
+import pl.koral.topkaminecraftrewards.model.VoteInfo;
 import pl.koral.topkaminecraftrewards.model.Votes;
 import pl.koral.topkaminecraftrewards.util.Cooldown;
 
@@ -68,14 +69,15 @@ public class Rewards implements TabExecutor {
 
         cooldown.setCooldown(p, 500);
         CompletableFuture<Inventory> prepareInventory = CompletableFuture.supplyAsync(() -> {
+            VoteInfo voteInfo = db.getVoteInfo(p);
             Votes votes = cache;
 
             long count = votes.getLikesHistory().keySet().stream().filter(name -> name.equals(p.getName())).count();
 
             Instant now = Instant.ofEpochMilli(System.currentTimeMillis()).atZone(ZoneId.systemDefault()).toInstant();
-            Duration diffDaily = Duration.between(now, Instant.ofEpochMilli(db.getPlayerLastVote(p.getPlayer(), Reward.DAILY)).atZone(ZoneId.systemDefault()).plusDays(1).toInstant());
-            Duration diffWeekly = Duration.between(now, Instant.ofEpochMilli(db.getPlayerLastVote(p.getPlayer(), Reward.WEEKLY)).atZone(ZoneId.systemDefault()).plusDays(7).toInstant());
-            Duration diffMonthly = Duration.between(now, Instant.ofEpochMilli(db.getPlayerLastVote(p.getPlayer(), Reward.MONTHLY)).atZone(ZoneId.systemDefault()).plusDays(30).toInstant());
+            Duration diffDaily = Duration.between(now, Instant.ofEpochMilli(voteInfo.getPlayerLastVote(Reward.DAILY)).atZone(ZoneId.systemDefault()).plusDays(1).toInstant());
+            Duration diffWeekly = Duration.between(now, Instant.ofEpochMilli(voteInfo.getPlayerLastVote(Reward.WEEKLY)).atZone(ZoneId.systemDefault()).plusDays(7).toInstant());
+            Duration diffMonthly = Duration.between(now, Instant.ofEpochMilli(voteInfo.getPlayerLastVote(Reward.MONTHLY)).atZone(ZoneId.systemDefault()).plusDays(30).toInstant());
 
             ItemStack info = ItemBuilder.builder().setType(Material.BOOK).accessItemMeta(ItemMeta.class, im -> {
                 im.setDisplayName(ChatColor.YELLOW + "Głosuj i zdobywaj nagrody!");
@@ -93,7 +95,7 @@ public class Rewards implements TabExecutor {
                 if (count == 0) {
                     lore.add(ChatColor.GRAY + "Musisz zagłosować na nasz serwer, aby odebrać nagrodę");
                     im.setLore(formatLore(lore));
-                } else if (db.didVote(p, Reward.DAILY)) {
+                } else if (voteInfo.didVote(p, Reward.DAILY)) {
                     lore.add(ChatColor.GRAY + "Zagłosuj i odbierz za: " + ChatColor.GOLD + diffDaily.toHours() + "h" + diffDaily.minusHours(diffDaily.toHours()).toMinutes() + "m");
                     im.setLore(formatLore(lore));
                 } else {
@@ -107,11 +109,11 @@ public class Rewards implements TabExecutor {
                 im.setDisplayName(ChatColor.YELLOW + "Odbierz tygodniową nagrodę!");
                 List<String> lore = config.getStringList("rewards.WEEKLY.lore");
 
-                if (db.didVote(p, Reward.WEEKLY) && db.getPlayerLastVote(p, Reward.WEEKLY) > 7) {
+                if (voteInfo.didVote(p, Reward.WEEKLY) && voteInfo.getPlayerLastVote(Reward.WEEKLY) > 7) {
                     lore.add(ChatColor.GRAY + "Zagłosuj i odbierz za: " + ChatColor.GOLD + diffWeekly.toDays() + "d" + diffWeekly.minusDays(diffWeekly.toDays()).toHours() + "h" + diffWeekly.minusHours(diffWeekly.toHours()).toMinutes() + "m");
                     im.setLore(formatLore(lore));
-                } else if (db.didVote(p, Reward.WEEKLY)) {
-                    lore.addAll(Arrays.asList(ChatColor.RED + "Zagłosuj i odbierz za: " + (7 - db.getPlayerVotesInARow(p) + " razy"), ChatColor.RED + "aby odebrać nagrodę tygodniową"));
+                } else if (voteInfo.didVote(p, Reward.WEEKLY)) {
+                    lore.addAll(Arrays.asList(ChatColor.RED + "Zagłosuj i odbierz za: " + (7 - voteInfo.getDaysInARow() + " razy"), ChatColor.RED + "aby odebrać nagrodę tygodniową"));
                     im.setLore(formatLore(lore));
                 } else {
                     lore.add(ChatColor.GREEN + "Można odebrać!");
@@ -123,11 +125,11 @@ public class Rewards implements TabExecutor {
             ItemStack monthly = ItemBuilder.builder().setType(Material.valueOf(config.getString("rewards.MONTHLY.item"))).accessItemMeta(ItemMeta.class, im -> {
                 im.setDisplayName(ChatColor.YELLOW + "Odbierz miesięczną nagrodę!");
                 List<String> lore = config.getStringList("rewards.MONTHLY.lore");
-                if (db.didVote(p, Reward.MONTHLY) && db.getPlayerLastVote(p, Reward.MONTHLY) > 30) {
+                if (voteInfo.didVote(p, Reward.MONTHLY) && voteInfo.getPlayerLastVote(Reward.MONTHLY) > 30) {
                     lore.add(ChatColor.GRAY + "Odbierz za: " + ChatColor.GOLD + diffMonthly.toDays() + "d" + diffMonthly.minusDays(diffMonthly.toDays()).toHours() + "h" + diffMonthly.minusHours(diffMonthly.toHours()).toMinutes() + "m");
                     im.setLore(formatLore(lore));
-                } else if (db.didVote(p, Reward.MONTHLY)) {
-                    lore.addAll(Arrays.asList(ChatColor.RED + "Głosuj jeszcze " + (30 - db.getPlayerVotesInARow(p)) + " razy", ChatColor.RED + "aby odebrać nagrodę miesięczną"));
+                } else if (voteInfo.didVote(p, Reward.MONTHLY)) {
+                    lore.addAll(Arrays.asList(ChatColor.RED + "Głosuj jeszcze " + (30 - voteInfo.getDaysInARow()) + " razy", ChatColor.RED + "aby odebrać nagrodę miesięczną"));
                     im.setLore(formatLore(lore));
                 } else {
                     lore.add(ChatColor.GREEN + "Można odebrać!");
@@ -156,7 +158,7 @@ public class Rewards implements TabExecutor {
                             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_PLACE, 1, 1);
                         }
                         if (event.getSlot() == SLOT_DAILY) {
-                            if (!db.didVote(player, Reward.DAILY) && count != 0) {
+                            if (!voteInfo.didVote(player, Reward.DAILY) && count != 0) {
                                 db.setVote(player, Reward.DAILY);
                                 player.sendMessage(prefix + ChatColor.GREEN + " Odebrałeś nagrodę dzienną!");
                                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 1, 1);
@@ -167,7 +169,7 @@ public class Rewards implements TabExecutor {
                             }
                         }
                         if (event.getSlot() == SLOT_WEEKLY) {
-                            if (!db.didVote(player, Reward.WEEKLY)) {
+                            if (!voteInfo.didVote(player, Reward.WEEKLY)) {
                                 db.setVote(player, Reward.WEEKLY);
                                 player.sendMessage(prefix + ChatColor.GREEN + " Odebrałeś nagrodę tygodniową!");
                                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 1, 1);
@@ -178,7 +180,7 @@ public class Rewards implements TabExecutor {
                             }
                         }
                         if (event.getSlot() == SLOT_MONTHLY) {
-                            if (!db.didVote(player, Reward.MONTHLY)) {
+                            if (!voteInfo.didVote(player, Reward.MONTHLY)) {
                                 db.setVote(player, Reward.MONTHLY);
                                 player.sendMessage(prefix + ChatColor.GREEN + " Odebrałeś nagrodę miesieczną!");
                                 player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_CELEBRATE, 1, 1);

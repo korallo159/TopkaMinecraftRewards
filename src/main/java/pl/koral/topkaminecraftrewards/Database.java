@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import pl.koral.topkaminecraftrewards.model.Reward;
 import pl.koral.topkaminecraftrewards.model.SimpleStatament;
+import pl.koral.topkaminecraftrewards.model.VoteInfo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,6 +16,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+
+import static pl.koral.topkaminecraftrewards.model.Reward.*;
 
 public class Database {
 
@@ -77,7 +80,7 @@ public class Database {
         setStatement("UPDATE Players SET " + reward.toSQLString() + " =?, DAYS_IN_A_ROW=? WHERE UUID=?", statement -> {
             statement.setLong(1, System.currentTimeMillis());
 
-            if(reward == pl.koral.topkaminecraftrewards.model.Reward.DAILY) { // Zwieksz/zresetuj glosowanie z rzedu tylko gdy jest odbierane daily, jezeli nie, to przepisz wartosc.
+            if (reward == DAILY) { // Zwieksz/zresetuj glosowanie z rzedu tylko gdy jest odbierane daily, jezeli nie, to przepisz wartosc.
                 if (isInARow(player))
                     statement.setInt(2, getPlayerVotesInARow(player) + 1);
                 else statement.setInt(2, 1);
@@ -86,8 +89,8 @@ public class Database {
             statement.setString(3, player.getUniqueId().toString());
             statement.execute();
 
-           List<String> commands = TopkaMinecraftRewards.getInstance().getConfig().getStringList("rewards." + reward + ".commands");
-           commands.replaceAll(e -> e.replace("%player%", player.getName()));
+            List<String> commands = TopkaMinecraftRewards.getInstance().getConfig().getStringList("rewards." + reward + ".commands");
+            commands.replaceAll(e -> e.replace("%player%", player.getName()));
             for (String command : commands)
                 Bukkit.getScheduler().runTask(TopkaMinecraftRewards.getInstance(), () -> Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command));
 
@@ -96,29 +99,17 @@ public class Database {
 
     }
 
-    public boolean didVote(Player player, pl.koral.topkaminecraftrewards.model.Reward reward) {
-        Map<String, Object> m = getResultSet("SELECT DAYS_IN_A_ROW, " + reward.toSQLString() + " FROM Players WHERE UUID=?", statement -> {
+
+    public VoteInfo getVoteInfo(Player player) {
+        String query = "SELECT DAYS_IN_A_ROW, LAST_DAILY_REWARD_TIME, LAST_WEEKLY_REWARD_TIME, LAST_MONTHLY_REWARD_TIME FROM Players WHERE UUID=?";
+
+        Map<String, Object> m = getResultSet(query, statement -> {
             statement.setString(1, player.getUniqueId().toString());
             statement.executeQuery();
         });
-        long lastRewarded;
-        long daysInARow;
-        lastRewarded = m.containsKey(reward.toSQLString())  ? (long) m.get(reward.toSQLString()) : 0;
-        daysInARow = m.containsKey("DAYS_IN_A_ROW") ? (int) m.get("DAYS_IN_A_ROW") : 0;
-        LocalDateTime last_rewarded;
-        LocalDateTime now = Instant.now().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        switch (reward) {
-            case DAILY:
-                last_rewarded = Instant.ofEpochMilli(lastRewarded).atZone(ZoneId.systemDefault()).toLocalDateTime().plusDays(1);
-                return last_rewarded.isAfter(now);
-            case WEEKLY:
-                last_rewarded = Instant.ofEpochMilli(lastRewarded).atZone(ZoneId.systemDefault()).toLocalDateTime().plusDays(7);
-                return last_rewarded.isAfter(now) || daysInARow < 7;
-            case MONTHLY:
-                last_rewarded = Instant.ofEpochMilli(lastRewarded).atZone(ZoneId.systemDefault()).toLocalDateTime().plusDays(30);
-                return last_rewarded.isAfter(now) || daysInARow < 30;
-        }
-        return false;
+        return new VoteInfo(player.getUniqueId(), (Integer) m.get("DAYS_IN_A_ROW"), (Long) m.get("LAST_DAILY_REWARD_TIME"), (Long) m.get("LAST_WEEKLY_REWARD_TIME"), (Long) m.get("LAST_MONTHLY_REWARD_TIME"));
+
+
     }
 
     private void setStatement(String query, SimpleStatament simpleStatament) {
@@ -175,12 +166,6 @@ public class Database {
         return last_rewarded.isAfter(d1) && last_rewarded.isBefore(d2);
     }
 
-    public Long getPlayerLastVote(Player player, Reward reward){
-        Map<String, Object> map = getResultSet("SELECT " +  reward.toSQLString() + " FROM Players WHERE UUID=?",
-                statement -> statement.setString(1, player.getUniqueId().toString()));
 
-
-        return map.containsKey(reward.toSQLString()) ? (long) map.get(reward.toSQLString()) : 0;
-    }
 
 }

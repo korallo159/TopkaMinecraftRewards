@@ -22,6 +22,7 @@ public final class TopkaMinecraftRewards extends JavaPlugin {
 
         Bukkit.getPluginManager().registerEvents(new PlayerJoin(), this);
         getCommand("rewards").setExecutor(new Rewards());
+
     }
 
     @Override
